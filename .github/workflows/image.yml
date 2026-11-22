@@ -1,0 +1,30 @@
+# 共享实现见 FindDataTechnology/fd-ci（openspec: extract-shared-ci-workflow）。
+# 本文件只声明「出什么镜像」，构建逻辑不在这里。
+name: image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  fd-capability-catalog:
+    uses: FindDataTechnology/fd-ci/.github/workflows/image-build.yml@main
+    secrets: inherit
+    with:
+      image: fd-capability-catalog
+      namespace: facet
+      # 构建后、推 tag 前验活：镜像里的 MCP 必须真的能起 HTTP。曾经
+      # `--transport http` 静默走 stdio（argparse 写在 __main__ 下），部署出来
+      # 等于没起服务——这道 smoke 就是那个缺陷的守卫。
+      smoke_script: |
+        set -euo pipefail
+        docker run -d --name cat-smoke -p 18320:8320 "$IMG" || { docker logs cat-smoke; exit 1; }
+        for i in $(seq 1 30); do
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18320/mcp \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"smoke","version":"1"}}}') || true
+          if [ "$code" = "200" ]; then echo "MCP initialize 200"; docker rm -f cat-smoke; exit 0; fi
+          sleep 2
+        done
+        docker logs cat-smoke; docker rm -f cat-smoke; echo "MCP initialize never returned 200"; exit 1

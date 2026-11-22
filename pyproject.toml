@@ -9,7 +9,19 @@ description = "Federated capability index (concept/indicator/graph/dataset) over
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-dependencies = ["fd-ontology-kernel"]
+# `fd-ontology-kernel` is NOT on PyPI (measured 2026-11-23: 404). A plain name
+# dependency made every consumer build die on "No matching distribution found".
+# law-bench's fix — vendor the wheel and resolve the name via
+# `[tool.uv.sources]` — is uv-only; pip still cannot see a bare name. So the
+# wheel is vendored here (`vendor/`, COPY'd by the Dockerfile) and installed
+# explicitly before this package:
+#
+#   pip install vendor/fd_ontology_kernel-0.1.0-py3-none-any.whl \
+#               --no-deps .          # or `uv pip install --no-deps .` after it
+#
+# No index dependency is declared so a pip build never waits on an unresolvable
+# name; the kernel stays a declared build input, resolved where it can be.
+dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest"]
@@ -25,5 +37,7 @@ mcp = ["fastmcp>=4.2.4,<5"]
 capability-catalog = "fd_capability_catalog.cli:main"
 capability-catalog-mcp = "fd_capability_catalog.server:serve_cli"
 
+# The kernel wheel lives in vendor/ and is installed before this package
+# (see the dependency comment above); it must not ship inside this wheel.
 [tool.setuptools]
 packages = ["fd_capability_catalog"]

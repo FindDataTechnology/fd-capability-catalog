@@ -7,3 +7,5 @@ dist/
 .ruff_cache/
 .pytest_cache/
 .DS_Store
+# 内核 wheel 是构建输入（不在 PyPI），必须进仓
+!vendor/*.whl
