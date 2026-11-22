@@ -94,6 +94,21 @@ def _cmd_build(args) -> int:
     return 0 if not rep.failures else 1
 
 
+def _cmd_serving(args) -> int:
+    """Emit capability -> [[server, tool], ...] serving edges.
+
+    This is what a downstream (e.g. paas pack assembly) needs to check whether a
+    referenced (server, tool) is real: the ``list`` view carries provider names
+    but not the tool edges. One JSON object, no decoration.
+    """
+    kernel = build_kernel(args.db)
+    units = kernel.live_units(scope_id=args.scope)
+    serving = serving_map_from_catalog(units)
+    out = {cid: [list(t) for t in edges] for cid, edges in serving.items()}
+    print(json.dumps(out, ensure_ascii=False))
+    return 0
+
+
 def _cmd_list(args) -> int:
     kernel = build_kernel(args.db)
     units = kernel.live_units(scope_id=args.scope)
@@ -155,6 +170,9 @@ def main(argv: list[str] | None = None) -> int:
     lst.add_argument("--kind", default=None, help="narrow to one kind")
     lst.add_argument("--governor", default=None, help="governor's server_access JSON (omit = admin full view)")
     lst.set_defaults(func=_cmd_list)
+
+    srv = sub.add_parser("serving", help="capability -> [[server,tool],...] serving edges (JSON)")
+    srv.set_defaults(func=_cmd_serving)
 
     r = sub.add_parser("resolve", help="effective capability set for a principal (model C)")
     r.add_argument("--agent", required=True, help="agent server_access JSON")
