@@ -22,6 +22,23 @@ Change: `establish-capability-plane`（capability-catalog 能力）。
 
 ## 用法
 
+CLI（可执行入口）：
+
+```bash
+# 投影：把各语义系统清单汇总进目录（--source all|open-data|business|graph）
+capability-catalog --db cat.db build --source all
+
+# 装配视图（治理者看自己范围内；省略 --governor = 管理员全量）
+capability-catalog --db cat.db list --kind concept
+capability-catalog --db cat.db list --governor '[{"server":"fd-open-data-mcp","tools":["read"]}]'
+
+# model C 有效面：喂 registry server_access，得能力级有效集
+capability-catalog --db cat.db resolve \
+  --agent '[{"server":"fd-open-data-mcp","tools":["read"]}]'
+```
+
+库 API：
+
 ```python
 from fd_capability_catalog.adapter import build_kernel
 k = build_kernel("/path/to/catalog.db")
@@ -48,12 +65,12 @@ python -m fd_ontology_kernel.conformance.gate --adapter fd-capability-catalog
 | `source_graph.py` | text-core KG verticals 作 graph kind（legal_v2/gov_v3；kg 工具边）|
 | `resolution.py` | 三层求交 agent ∧ owner ∧ pack（能力 id 级，取最严）|
 | `access.py` | 模型 C：registry `server_access`(工具级) + serving map(工具↔能力) → 能力级有效面 |
-
 | `readers.py` | 三种读者：装配（全量）/ 常驻（pack 所用）/ 检索（分页+有效面）|
+| `cli.py` | 可执行入口：build（投影）/ list（装配视图）/ resolve（model C 有效面）|
 
 ## 测试
 
 ```bash
 PYTHONPATH=../fd-ontology-kernel:. uv run --with pytest python -m pytest tests/
-# 34 passed (含 model C + 跨系统合并 + 真数据整链 + graph kind)
+# 37 passed (含 CLI + model C + 跨系统合并 + 真数据整链 + graph kind)
 ```

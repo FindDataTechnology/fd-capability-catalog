@@ -14,5 +14,8 @@ dependencies = ["fd-ontology-kernel"]
 [project.optional-dependencies]
 dev = ["pytest"]
 
+[project.scripts]
+capability-catalog = "fd_capability_catalog.cli:main"
+
 [tool.setuptools]
 packages = ["fd_capability_catalog"]
