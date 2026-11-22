@@ -8,8 +8,12 @@ fd-open-data-mcp.
 Tools:
 - ``list_capabilities`` — governed view (optionally narrowed by kind and by the
   caller's server_access), one JSON row per capability.
-- ``serving_edges``     — capability -> [[server, tool], ...] (the bridge a
-  reference check needs: is this (server, tool) real?).
+- ``has_serving_edge``  — per-server answer: does this server expose these
+  tools? (``known: false`` = local/bundled binding, absence proves nothing).
+  The tool a reference check should call: it aggregates server-side, so the
+  client never receives the catalog.
+- ``serving_edges``     — capability -> [[server, tool], ...]. Pass ``server``
+  unless you really need the whole map: it is ~13 MB at 30k capabilities.
 - ``resolve_for``       — model-C effective set for a principal's server_access.
 
 The catalog owns its db / build / refresh. Callers only pass a db path via env
@@ -81,13 +85,54 @@ def list_capabilities(
     return [r.to_public() for r in rows]
 
 
-def serving_edges(scope_id: str = DEFAULT_SCOPE) -> dict[str, list[list[str]]]:
+def serving_edges(
+    server: str | None = None,
+    scope_id: str = DEFAULT_SCOPE,
+) -> dict[str, list[list[str]]]:
     """capability id -> [[server, tool], ...] serving edges.
 
     What a reference check uses to answer "is this (server, tool) real?".
+
+    ``server`` narrows the answer to capabilities reachable through that one
+    server. Pass it whenever the caller only cares about one server: the full
+    map is ~13 MB at 30k capabilities (measured 2026-11-23) and does not fit a
+    single MCP response over a real network — a per-server answer is a few KB.
     """
     units = _units(scope_id)
-    return {cid: [list(t) for t in edges] for cid, edges in serving_map_from_catalog(units).items()}
+    edges = {cid: [list(t) for t in e] for cid, e in serving_map_from_catalog(units).items()}
+    if server is None:
+        return edges
+    return {
+        cid: [e for e in pairs if e[0] == server]
+        for cid, pairs in edges.items()
+        if any(e[0] == server for e in pairs)
+    }
+
+
+def has_serving_edge(
+    server: str,
+    tools: list[str],
+    scope_id: str = DEFAULT_SCOPE,
+) -> dict[str, Any]:
+    """Does this server really expose these tools? One small answer, no map.
+
+    The reference check's actual question — aggregated server-side so the
+    client never receives the catalog. ``known`` distinguishes "this server
+    serves nothing in the catalog" (a local/bundled binding: absence here is
+    NOT evidence of absence) from "it serves some, but not these tools".
+    """
+    units = _units(scope_id)
+    serving = serving_map_from_catalog(units)
+    server_tools: set[str] = set()
+    for pairs in serving.values():
+        for s, t in pairs:
+            if s == server:
+                server_tools.add(t)
+    if not server_tools:
+        return {"server": server, "known": False, "present": [], "missing": []}
+    present = [t for t in tools if t in server_tools]
+    missing = [t for t in tools if t not in server_tools]
+    return {"server": server, "known": True, "present": present, "missing": missing}
 
 
 def resolve_for(
@@ -140,6 +185,7 @@ def build_mcp():
     )
     mcp.tool(list_capabilities)
     mcp.tool(serving_edges)
+    mcp.tool(has_serving_edge)
     mcp.tool(resolve_for)
     return mcp
 

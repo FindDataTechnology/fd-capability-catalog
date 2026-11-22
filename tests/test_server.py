@@ -90,3 +90,26 @@ def test_console_entry_parses_transport(monkeypatch):
 
     server.serve_cli(["--transport", "http", "--host", "0.0.0.0", "--port", "8321"])
     assert calls == [("0.0.0.0", 8321)]
+
+
+def test_has_serving_edge_known_and_missing(catalog_db):
+    r = server.has_serving_edge("fd-open-data-mcp", ["read", "graph_search", "nope"])
+    assert r["known"] is True
+    assert r["present"] == ["read", "graph_search"]
+    assert r["missing"] == ["nope"]
+
+
+def test_has_serving_edge_unknown_server_is_not_evidence(catalog_db):
+    """A server the catalog does not cover (local/bundled binding) must be
+    reported as unknown, never as 'these tools are missing'."""
+    r = server.has_serving_edge("chatwoot", ["messages_list"])
+    assert r["known"] is False
+    assert r["missing"] == []
+
+
+def test_serving_edges_narrows_by_server(catalog_db):
+    all_edges = server.serving_edges()
+    one = server.serving_edges(server="fd-open-data-mcp")
+    assert set(one) <= set(all_edges)
+    assert all(e[0] == "fd-open-data-mcp" for pairs in one.values() for e in pairs)
+    assert server.serving_edges(server="nonexistent") == {}
