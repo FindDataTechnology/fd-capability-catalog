@@ -22,7 +22,14 @@ Change: `establish-capability-plane`（capability-catalog 能力）。
 
 ## 用法
 
-CLI（可执行入口）：
+**MCP 服务（消费方的主入口）**：能力目录是个 MCP server，paas 等消费方经 MCP 调它的工具（`serving_edges` / `resolve_for` / `list_capabilities`），与调任何其他 MCP 一样——不装实现、不读 db 文件。
+
+```bash
+CAPABILITY_CATALOG_DB=/data/capability.db \
+  capability-catalog-mcp --transport http --host 0.0.0.0 --port 8320   # → /mcp
+```
+
+CLI（本地运维/离线 build）：
 
 ```bash
 # 投影：把各语义系统清单汇总进目录（--source all|open-data|business|graph）
@@ -67,10 +74,11 @@ python -m fd_ontology_kernel.conformance.gate --adapter fd-capability-catalog
 | `access.py` | 模型 C：registry `server_access`(工具级) + serving map(工具↔能力) → 能力级有效面 |
 | `readers.py` | 三种读者：装配（全量）/ 常驻（pack 所用）/ 检索（分页+有效面）|
 | `cli.py` | 可执行入口：build（投影）/ list（装配视图）/ resolve（model C 有效面）|
+| `server.py` | MCP 服务：serving_edges / resolve_for / list_capabilities 三工具（FastMCP）|
 
 ## 测试
 
 ```bash
 PYTHONPATH=../fd-ontology-kernel:. uv run --with pytest python -m pytest tests/
-# 37 passed (含 CLI + model C + 跨系统合并 + 真数据整链 + graph kind)
+# 44 passed (含 MCP server 工具 + 两种 graph + CLI + model C + 真数据整链)
 ```

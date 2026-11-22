@@ -56,10 +56,13 @@ def _sources(selected: list[str], verticals_dir: str | None):
             print(f"! business source unavailable: {type(exc).__name__}: {exc}", file=sys.stderr)
     if "graph" in selected or "all" in selected:
         try:
-            from .source_graph import TextCoreGraphSource
+            from .source_graph import EntityGraphSource, TextCoreGraphSource
 
             vdir = verticals_dir or "fd-text-core/fd_text_core/kg_lane/verticals"
             out.append(TextCoreGraphSource(Path(vdir)))
+            # Entity-relationship graph (served by graph_search on open-data +
+            # business) — a separate, always-present graph capability.
+            out.append(EntityGraphSource())
         except Exception as exc:  # noqa: BLE001
             print(f"! graph source unavailable: {type(exc).__name__}: {exc}", file=sys.stderr)
     return out

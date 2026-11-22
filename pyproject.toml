@@ -17,9 +17,13 @@ dev = ["pytest"]
 # model). Kept optional so the catalog + graph source work without the heavy
 # data stack; install `[sources]` to enable the DB-backed sources.
 sources = ["fd-open-data-mcp[data]"]
+# The MCP tool surface (server.py). Optional so the core lib / CLI stays light;
+# install `[mcp]` where the catalog is served over MCP.
+mcp = ["fastmcp>=2.0"]
 
 [project.scripts]
 capability-catalog = "fd_capability_catalog.cli:main"
+capability-catalog-mcp = "fd_capability_catalog.server:main"
 
 [tool.setuptools]
 packages = ["fd_capability_catalog"]

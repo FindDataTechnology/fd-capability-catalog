@@ -73,3 +73,38 @@ class TextCoreGraphSource:
                 )
             )
         return entries
+
+
+#: The entity-relationship graph (NetworkX) served by ``graph_search``. Unlike the
+#: text-core KG verticals, this is ONE graph (entities + entity_relationships
+#: tables), exposed by both fd-open-data-mcp and fd-find-data-business-mcp under
+#: the same tool name. It was missing from the first cut of this source; added
+#: 2026-11-23.
+ENTITY_GRAPH_SYSTEM = "fd-open-data-mcp"
+ENTITY_GRAPH_SERVING: tuple[tuple[str, str], ...] = (
+    ("fd-open-data-mcp", "graph_search"),
+    ("fd-find-data-business-mcp", "graph_search"),
+)
+
+
+class EntityGraphSource:
+    """The entity-relationship graph as one ``graph`` capability."""
+
+    system = "entity-graph"
+
+    def list_capabilities(self, *, scope_id: str) -> Sequence[CatalogEntry]:
+        return [
+            CatalogEntry(
+                federated_id="graph:entity-graph",
+                kind="graph",
+                name="entity-relationship graph",
+                served_by=ENTITY_GRAPH_SYSTEM,
+                status="verified",
+                coverage={
+                    "backing": "entities + entity_relationships (NetworkX)",
+                    "algorithms": ["bfs", "dfs", "neighbors", "shortest_path",
+                                   "subgraph", "ego_graph", "statistics"],
+                },
+                served_by_tools=tuple(ENTITY_GRAPH_SERVING),
+            )
+        ]
