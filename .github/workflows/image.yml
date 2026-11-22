@@ -13,7 +13,7 @@ jobs:
     secrets: inherit
     with:
       image: fd-capability-catalog
-      namespace: facet
+      namespace: finddata
       # 构建后、推 tag 前验活：镜像里的 MCP 必须真的能起 HTTP。曾经
       # `--transport http` 静默走 stdio（argparse 写在 __main__ 下），部署出来
       # 等于没起服务——这道 smoke 就是那个缺陷的守卫。
