@@ -13,6 +13,10 @@ dependencies = ["fd-ontology-kernel"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
+# The live open-data / business sources need this package (session + Concept
+# model). Kept optional so the catalog + graph source work without the heavy
+# data stack; install `[sources]` to enable the DB-backed sources.
+sources = ["fd-open-data-mcp[data]"]
 
 [project.scripts]
 capability-catalog = "fd_capability_catalog.cli:main"
