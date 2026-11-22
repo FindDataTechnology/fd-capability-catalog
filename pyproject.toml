@@ -23,7 +23,7 @@ mcp = ["fastmcp>=4.2.4,<5"]
 
 [project.scripts]
 capability-catalog = "fd_capability_catalog.cli:main"
-capability-catalog-mcp = "fd_capability_catalog.server:main"
+capability-catalog-mcp = "fd_capability_catalog.server:serve_cli"
 
 [tool.setuptools]
 packages = ["fd_capability_catalog"]

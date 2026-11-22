@@ -74,3 +74,19 @@ def test_missing_db_env_raises(monkeypatch):
 def test_bad_server_access_json_raises(catalog_db):
     with pytest.raises(ValueError):
         server.list_capabilities(server_access="not json")
+
+def test_console_entry_parses_transport(monkeypatch):
+    """The console script must honour --transport; it used to fall through to
+    stdio because argparse lived under __main__ (measured 2026-11-23)."""
+    import sys
+    import types
+
+    calls = []
+    fake_uv = types.ModuleType("uvicorn")
+    fake_uv.run = lambda app, host, port: calls.append((host, port))
+    monkeypatch.setitem(sys.modules, "uvicorn", fake_uv)
+    monkeypatch.setattr(server, "build_mcp", lambda: types.SimpleNamespace(http_app=lambda: object()))
+    monkeypatch.setenv("CAPABILITY_CATALOG_DB", "/tmp/unused.db")
+
+    server.serve_cli(["--transport", "http", "--host", "0.0.0.0", "--port", "8321"])
+    assert calls == [("0.0.0.0", 8321)]

@@ -155,12 +155,23 @@ def main(transport: str = "stdio", host: str = "127.0.0.1", port: int = 8320) ->
     uvicorn.run(mcp.http_app(), host=host, port=port)
 
 
-if __name__ == "__main__":  # pragma: no cover
+def serve_cli(argv: list[str] | None = None) -> None:
+    """Console entry (``capability-catalog-mcp``): parse flags, then run.
+
+    The parsing used to live under ``if __name__ == "__main__"``, which the
+    console script never triggers — so ``capability-catalog-mcp --transport http``
+    silently started **stdio** (measured 2026-11-23). A deployed server must not
+    be able to ignore its own transport flag.
+    """
     import argparse
 
     p = argparse.ArgumentParser(description="Capability catalog MCP server.")
     p.add_argument("--transport", default=os.getenv("MCP_TRANSPORT", "stdio"), choices=["stdio", "http"])
     p.add_argument("--host", default=os.getenv("MCP_HOST", "127.0.0.1"))
     p.add_argument("--port", type=int, default=int(os.getenv("MCP_PORT", "8320")))
-    a = p.parse_args()
+    a = p.parse_args(argv)
     main(transport=a.transport, host=a.host, port=a.port)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    serve_cli()
