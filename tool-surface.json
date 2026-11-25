@@ -1,0 +1,34 @@
+{
+  "schema": "mcp-tool-surface/v1",
+  "server": "capability-catalog",
+  "entry_path": "/capability-catalog",
+  "product_line": "base",
+  "hosting": ["shared-instance"],
+  "description": "联邦能力目录：把各语义系统（concept / 指标 / 图 / 数据集）已有清单汇总成一份只读投影，供上层按授权裁剪。不是数据本体，是跨语义系统的索引；跑在 fd-ontology-kernel 的纪律下（唯一写路径、词表闭集闸、身份=(作用域+kind+外部键)、append-only 事件）。",
+  "naming_convention": {
+    "order": "verb_noun",
+    "applies_to": "all_tools",
+    "note": "四个工具一律动词_名词（list_capabilities / serving_edges / has_serving_edge / resolve_for）。前三个是列表/查询，最后一个 resolve_for 是解析。"
+  },
+  "tool_groups": [
+    {
+      "group": "browse",
+      "level": "commercial",
+      "tools": ["list_capabilities", "resolve_for"],
+      "notes": "受治理的浏览（list_capabilities）与按主体解析有效能力集（resolve_for）。"
+    },
+    {
+      "group": "verify",
+      "level": "internal",
+      "tools": ["serving_edges", "has_serving_edge"],
+      "notes": "装配期校验面：判 (server, tool) 引用是否为真、某服务是否有在役边。控制面板一律 internal（spec: mcp-surface-contract「控制面一族默认 internal」）。"
+    }
+  ],
+  "tool_annotations": {
+    "list_capabilities": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+    "resolve_for": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+    "serving_edges": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+    "has_serving_edge": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}
+  },
+  "skills_eligible_for_packs": []
+}
